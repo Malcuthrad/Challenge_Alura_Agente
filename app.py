@@ -106,20 +106,18 @@ def mostrar_burbuja(role, contenido, fuentes=None):
             f'📄 Fuentes: {html.escape(", ".join(fuentes))}</div>'
         )
 
-    st.markdown(
-        f"""
-        <div style="display:flex;flex-direction:{direccion};align-items:flex-start;
-                    gap:10px;{margen}margin-bottom:16px;">
-            <div style="font-size:1.5rem;line-height:1;">{avatar}</div>
-            <div style="background-color:{fondo};border-radius:16px;padding:10px 16px;
-                        max-width:80%;text-align:{alineacion_texto};">
-                <div>{contenido_html}</div>
-                {fuentes_html}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    partes = [
+        f'<div style="display:flex;flex-direction:{direccion};align-items:flex-start;'
+        f'gap:10px;{margen}margin-bottom:16px;">',
+        f'<div style="font-size:1.5rem;line-height:1;">{avatar}</div>',
+        f'<div style="background-color:{fondo};border-radius:16px;padding:10px 16px;'
+        f'max-width:80%;text-align:{alineacion_texto};">',
+        f'<div>{contenido_html}</div>',
+        fuentes_html,
+        '</div>',
+        '</div>',
+    ]
+    st.markdown("".join(partes), unsafe_allow_html=True)
 
 
 # Mostrar historial (o mensaje de bienvenida si todavía no hay nada)
