@@ -42,17 +42,24 @@ st.markdown(
         background-color: #F0EBFF;
         border-radius: 16px;
         padding: 4px 6px;
+        margin-right: 18%;
     }
     [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
         background-color: #FFF1EE;
         border-radius: 16px;
         padding: 4px 6px;
+        margin-left: 18%;
+        flex-direction: row-reverse;
+        text-align: right;
+    }
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {
+        text-align: right;
     }
     </style>
 
     <div class="bbb-header">
         <h1>🛍️ Agente de soporte — BimBam Buy</h1>
-        <p>Preguntá sobre envíos, garantías, reembolsos, pagos o el programa de afiliados.</p>
+        <p>Pregunte sobre envíos, garantías, reembolsos, pagos o el programa de afiliados.</p>
     </div>
     """,
     unsafe_allow_html=True,
