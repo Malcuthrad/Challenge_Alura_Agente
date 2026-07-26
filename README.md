@@ -6,7 +6,7 @@ responde consultas en lenguaje natural sobre envíos, garantías, reembolsos, pa
 programa de afiliados, combinando información de varios documentos cuando la pregunta lo
 requiere.
 
-**App en vivo:** _[pegar acá el link de Streamlit Cloud una vez desplegada]_
+**App en vivo:** https://challengealuraagente-x42pwivsbkrdwnmqvxqr6i.streamlit.app/
 
 ## Arquitectura
 
