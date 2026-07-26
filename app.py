@@ -3,6 +3,7 @@ import os
 
 import streamlit as st
 from langchain_classic.chains import RetrievalQA
+from langchain_core.prompts import PromptTemplate
 from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -66,6 +67,30 @@ if not groq_api_key:
 os.environ["GROQ_API_KEY"] = groq_api_key
 
 
+PROMPT_TEMPLATE = """Sos el agente de soporte de BimBam Buy. Respondé la pregunta del cliente
+usando exclusivamente la información del contexto de abajo.
+
+Estilo de respuesta:
+- Tono cercano, claro y natural, como si le hablaras directamente a la persona.
+- Nunca uses tablas ni encabezados (nada de ###, ni títulos en negrita tipo sección).
+- Escribí en párrafos cortos. Usá una lista simple con guiones solo si hay pasos concretos
+  a seguir, y no más de 4-5 puntos.
+- Priorizá lo esencial (qué hacer, plazos, costos) sin repetir el mismo contenido en
+  distintos formatos ni agregar un "resumen" después de ya haber explicado todo.
+- No inventes datos de contacto (teléfonos, chats en vivo, emails) que no estén
+  explícitamente en el contexto.
+- Si el contexto no cubre la pregunta, decilo claramente en vez de inventar una respuesta.
+
+Contexto:
+{context}
+
+Pregunta del cliente: {question}
+
+Respuesta:"""
+
+QA_PROMPT = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
+
+
 @st.cache_resource
 def cargar_cadena():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -77,7 +102,12 @@ def cargar_cadena():
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
     # llama-3.3-70b-versatile fue deprecado por Groq (jun. 2026); usamos el reemplazo recomendado.
     llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
-    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
+    return RetrievalQA.from_chain_type(
+        llm=llm,
+        retriever=retriever,
+        return_source_documents=True,
+        chain_type_kwargs={"prompt": QA_PROMPT},
+    )
 
 
 qa_chain = cargar_cadena()
