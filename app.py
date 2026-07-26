@@ -1,3 +1,4 @@
+import html
 import os
 
 import streamlit as st
@@ -38,23 +39,6 @@ st.markdown(
         font-size: 0.95rem;
     }
 
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
-        background-color: #F0EBFF;
-        border-radius: 16px;
-        padding: 4px 6px;
-        margin-right: 18%;
-    }
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-        background-color: #FFF1EE;
-        border-radius: 16px;
-        padding: 4px 6px;
-        margin-left: 18%;
-        flex-direction: row-reverse;
-        text-align: right;
-    }
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {
-        text-align: right;
-    }
     </style>
 
     <div class="bbb-header">
@@ -105,38 +89,64 @@ if "historial" not in st.session_state:
 AVATAR_ASISTENTE = "🛍️"
 AVATAR_USUARIO = "🙂"
 
-# Mostrar mensajes anteriores
-if not st.session_state.historial:
-    with st.chat_message("assistant", avatar=AVATAR_ASISTENTE):
-        st.markdown(
-            "¡Hola! 👋 Preguntame sobre envíos, garantías, reembolsos, pagos "
-            "o el programa de afiliados de BimBam Buy."
+
+def mostrar_burbuja(role, contenido, fuentes=None):
+    es_usuario = role == "user"
+    avatar = AVATAR_USUARIO if es_usuario else AVATAR_ASISTENTE
+    fondo = "#FFF1EE" if es_usuario else "#F0EBFF"
+    direccion = "row-reverse" if es_usuario else "row"
+    margen = "margin-left:18%;" if es_usuario else "margin-right:18%;"
+    alineacion_texto = "right" if es_usuario else "left"
+
+    contenido_html = html.escape(contenido).replace("\n", "<br>")
+    fuentes_html = ""
+    if fuentes:
+        fuentes_html = (
+            f'<div style="font-size:0.8rem;color:#6b7280;margin-top:8px;">'
+            f'📄 Fuentes: {html.escape(", ".join(fuentes))}</div>'
         )
 
+    st.markdown(
+        f"""
+        <div style="display:flex;flex-direction:{direccion};align-items:flex-start;
+                    gap:10px;{margen}margin-bottom:16px;">
+            <div style="font-size:1.5rem;line-height:1;">{avatar}</div>
+            <div style="background-color:{fondo};border-radius:16px;padding:10px 16px;
+                        max-width:80%;text-align:{alineacion_texto};">
+                <div>{contenido_html}</div>
+                {fuentes_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Mostrar historial (o mensaje de bienvenida si todavía no hay nada)
+if not st.session_state.historial:
+    mostrar_burbuja(
+        "assistant",
+        "¡Hola! 👋 Preguntame sobre envíos, garantías, reembolsos, pagos "
+        "o el programa de afiliados de BimBam Buy.",
+    )
+
 for mensaje in st.session_state.historial:
-    avatar = AVATAR_ASISTENTE if mensaje["role"] == "assistant" else AVATAR_USUARIO
-    with st.chat_message(mensaje["role"], avatar=avatar):
-        st.markdown(mensaje["content"])
-        if mensaje.get("fuentes"):
-            st.caption("📄 Fuentes: " + ", ".join(mensaje["fuentes"]))
+    mostrar_burbuja(mensaje["role"], mensaje["content"], mensaje.get("fuentes"))
 
 # Entrada de chat (queda fija abajo, como en Claude/ChatGPT)
 pregunta = st.chat_input("Escribí tu pregunta sobre BimBam Buy...")
 
 if pregunta:
     st.session_state.historial.append({"role": "user", "content": pregunta})
-    with st.chat_message("user", avatar=AVATAR_USUARIO):
-        st.markdown(pregunta)
+    mostrar_burbuja("user", pregunta)
 
-    with st.chat_message("assistant", avatar=AVATAR_ASISTENTE):
-        with st.spinner("Buscando en los documentos..."):
-            resultado = qa_chain.invoke({"query": pregunta})
-        respuesta = resultado["result"]
-        fuentes = sorted(
-            {doc.metadata.get("documento", "desconocido") for doc in resultado["source_documents"]}
-        )
-        st.markdown(respuesta)
-        st.caption("📄 Fuentes: " + ", ".join(fuentes))
+    with st.spinner("Buscando en los documentos..."):
+        resultado = qa_chain.invoke({"query": pregunta})
+    respuesta = resultado["result"]
+    fuentes = sorted(
+        {doc.metadata.get("documento", "desconocido") for doc in resultado["source_documents"]}
+    )
+    mostrar_burbuja("assistant", respuesta, fuentes)
 
     st.session_state.historial.append(
         {"role": "assistant", "content": respuesta, "fuentes": fuentes}
